@@ -52,3 +52,7 @@
 - Athena : 데이터 분석
 - Glue : 데이터 통합
 - Kensis : 데이터 수집
+
+
+---
+AWS Command URL : https://docs.aws.amazon.com/cli/latest/
