@@ -1,4 +1,4 @@
-# Cloud Infra 
+<img width="657" height="507" alt="image" src="https://github.com/user-attachments/assets/01f3c050-d8c3-487a-81f9-58aa4cadd671" /># Cloud Infra 
 
 <img width="958" height="563" alt="image" src="https://github.com/user-attachments/assets/9932d9ee-5fed-4014-96ca-1a25b16b19a8" />
 
@@ -55,4 +55,67 @@
 
 
 ---
+## 실습 환경 구축 
+- AWS IAM 계정 만들기 
+
+### 멀티 계정에서 AWS CLI 사용 방법(Windows Powershell)
+- aws configure --profile training1    #training1 설정
+- aws configure --profile training2    #training2 설정
+- aws configure list -profiles    #접근 계정 목록들 보기
+- aws configure list --profile training1    #training1 계정 내용 보기
+- $env:AWS_PROFILE = "training2"    #default profile을 training2로 설정
+- C:\Users\<사용자명>\.aws\credentials    #profile 파일 내용을 직접 수정 
+
+### AWS Console 접속 
+
+
+<img width="1917" height="888" alt="image" src="https://github.com/user-attachments/assets/08c0368d-e893-42e1-bdb9-9749ac654217" />
+
+### AWS S3 Bucket 
+1. AWS Console home에서 S3 접속
+
+<img width="657" height="507" alt="image" src="https://github.com/user-attachments/assets/986e7036-c5dd-45a4-ac3c-2ef956214692" />
+
+2. 버킷 만들기 클릭
+
+<img width="1066" height="199" alt="image" src="https://github.com/user-attachments/assets/7284c85b-87d8-4cdb-b226-26bf76fc884c" />
+
+3. 버킷 정보 
+- 버킷 이름 : 사용할 버킷 이름
+- 객체 소유권 : ACL 활성화
+- 퍼블릭 엑세스 차단 설정 : 체크 모두 해제
+- 버킷 만들기 클릭 
+
+4. 버킷 생성 확인 
+
+<img width="1073" height="224" alt="image" src="https://github.com/user-attachments/assets/98734d20-d710-46e9-9420-e3185c274c72" />
+
+5. 파일 업로드 
+
+<img width="1663" height="616" alt="image" src="https://github.com/user-attachments/assets/c170fb9e-f06f-4024-bdb6-0c64a9558c92" />
+
+6. 파일 업로드 후 객체 URL 확인
+
+<img width="1590" height="502" alt="image" src="https://github.com/user-attachments/assets/55585b3c-afae-4bb9-9b91-79dc9b48d4b3" />
+
+### ※ AccessDenied 오류 발생 시 
+
+1. 버킷 정책 편집 
+
+<img width="1589" height="770" alt="image" src="https://github.com/user-attachments/assets/c8c9cc9e-5af1-434e-80b9-bbd43d11f145" />
+
+2. 버킷 정책 -> 편집 (버킷 ARN 복사)
+
+3. 버킷 정책 생성
+- Select Policy Type : S3 Bucket Policy
+- Principal : *
+- Actions : GetObject
+- 복사한 ARN 입력 후 Add Statement 
+
+4. Policy JSON Document 복사
+
+5. 버킷 정책 편집 사용 (JSON 입력)
+
+<img width="1213" height="374" alt="image" src="https://github.com/user-attachments/assets/360fb862-70e8-4b02-b16e-91e63908d19c" />
+
 AWS Command URL : https://docs.aws.amazon.com/cli/latest/
