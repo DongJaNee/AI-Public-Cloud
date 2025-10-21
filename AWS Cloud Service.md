@@ -1,4 +1,4 @@
-<img width="657" height="507" alt="image" src="https://github.com/user-attachments/assets/01f3c050-d8c3-487a-81f9-58aa4cadd671" /># Cloud Infra 
+# Cloud Infra 
 
 <img width="958" height="563" alt="image" src="https://github.com/user-attachments/assets/9932d9ee-5fed-4014-96ca-1a25b16b19a8" />
 
