@@ -43,3 +43,12 @@
 | **비밀 관리** | AWS Secrets Manager | 서버리스 애플리케이션의 비밀(API 키, 비밀번호 등) 관리 및 교체 |
 | **모니터링** | Amazon CloudWatch | 서버리스 애플리케이션 모니터링, 로깅, 알람 설정 서비스 |
 | **배포** | AWS SAM (Serverless Application Model) | 서버리스 애플리케이션 빌드 및 배포를 간소화하는 프레임워크 |
+
+---
+- API Gateway : Restful API와 같은(push ,Put, delete ..)
+- DynamoDB : JSON형 DB
+- EventBridge : 조건부, 필터링
+- Cognito : 사용자 인증
+- Athena : 데이터 분석
+- Glue : 데이터 통합
+- Kensis : 데이터 수집
