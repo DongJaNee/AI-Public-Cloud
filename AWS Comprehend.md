@@ -34,7 +34,7 @@ aws configure
 ```
 
 ### 2. 필요 권한 
-필요 IAM 정책 : ComprehendReadOnly, ComprehendFullAccess
+필요 IAM 정책 : `ComprehendReadOnly` `ComprehendFullAccess`
 
 ### 3. 실습 디렉터리 생성
 ```
