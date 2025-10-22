@@ -307,4 +307,84 @@ aws translate describe-text-translation-job --job-id $JOB_ID
 aws s3 sync s3://$BUCKET_NAME/output/ ./translated_output/
 ```
 
+## 실습 5 : 실제 사용 사례 - 웹 애플리케이션 연동
+### 1. Node.js 예제 (translate.js)
+```
+const { TranslateClient, TranslateTextCommand } = require("@aws-sdk/client-translate");
+
+// Amazon Translate 클라이언트 생성
+const client = new TranslateClient({ region: "us-east-1" });
+
+async function translateCustomerMessage(text, sourceLang = "auto", targetLang = "ko") {
+  try {
+    const command = new TranslateTextCommand({
+      Text: text,
+      SourceLanguageCode: sourceLang,
+      TargetLanguageCode: targetLang,
+      TerminologyNames: ["ecommerce-terms"], // ✅ 커스텀 용어집 이름
+    });
+
+    const response = await client.send(command);
+
+    return {
+      translated_text: response.TranslatedText,
+      source_language: response.SourceLanguageCode,
+      target_language: response.TargetLanguageCode,
+      applied_terminologies: response.AppliedTerminologies?.map(t => t.Name) || []
+    };
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+// 사용 예시
+(async () => {
+  const messages = [
+    "Hello, I need help with my order",
+    "I want to exchange my smartphone under warranty",
+    "I would like a refund for my tablet",
+  ];
+
+  for (const msg of messages) {
+    const result = await translateCustomerMessage(msg);
+    console.log(`원문: ${msg}`);
+    console.log(`번역: ${result.translated_text}`);
+    console.log(`감지된 언어: ${result.source_language}`);
+    console.log(`적용된 용어집: ${result.applied_terminologies.join(", ") || "없음"}`);
+    console.log("-".repeat(50));
+  }
+})();
+
+```
+
+실행 절차
+```
+# 프로젝트 초기화 (package.json 생성)
+npm init -y
+
+# AWS Translate SDK 설치
+npm install @aws-sdk/client-translate
+
+# 실행
+node translate.js
+```
+
+### 디버깅 명령어
+```
+
+# 상세 오류 정보 확인
+aws translate translate-text \
+    --source-language-code en \
+    --target-language-code ko \
+    --text "test" \
+    --debug
+
+# AWS CLI 버전 확인
+aws --version
+
+# 자격 증명 확인
+aws sts get-caller-identity
+```
+
+
 
