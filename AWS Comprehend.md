@@ -1,5 +1,29 @@
 # AWS Comprehend 실습 
 ## 사전 준비사항
+```
+#Comprehend 배치 작업용 역할 생성 
+
+cat > comprehend-trust-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "comprehend.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+aws iam create-role \
+    --role-name ComprehendRole \
+    --assume-role-policy-document file://comprehend-trust-policy.json
+
+```
+
 ### 1. AWS 계정 및 CLI 계정
 ```
 # AWS CLI 설치 확인
