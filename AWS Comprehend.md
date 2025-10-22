@@ -1,5 +1,4 @@
-# AWS Comprehend 실습 
-## 사전 준비사항
+# AWS Comprehend 실습
 ```
 #Comprehend 배치 작업용 역할 생성 
 
@@ -24,6 +23,8 @@ aws iam create-role \
 
 ```
 
+
+## 사전 준비사항
 ### 1. AWS 계정 및 CLI 계정
 ```
 # AWS CLI 설치 확인
