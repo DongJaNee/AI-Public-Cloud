@@ -16,6 +16,7 @@
 
 ### 예측 분석 서비스
 - **Amazon Forecast** : 수요, 예측, 재고 관리
+- **SageMaker** : 수요 패턴 분석 
 
 ### 이상 탐지 및 사기 탐지 서비스
 - **Amazon Lookout for Metrics** : 이상 지표 감지
@@ -59,3 +60,6 @@
 **Amazon Kendra**
 - 기능 : 기업 문서 검색, 자연어 질의 응답, data lake
 - 활용 : FAQ/지식베이스 자동화 
+
+---
+
