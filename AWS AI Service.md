@@ -57,7 +57,7 @@
 - 활용 : 영상 자막 자동 생성 툴 
 
 ### 지능형 검색 
-**Amazon Kendra**
+- **Amazon Kendra**
 - 기능 : 기업 문서 검색, 자연어 질의 응답, data lake
 - 활용 : FAQ/지식베이스 자동화 
 
