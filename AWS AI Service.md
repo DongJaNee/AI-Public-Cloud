@@ -1,7 +1,7 @@
 ## AWS AI Service
 ### 컴퓨터 비전 서비스 
-**Amazon Rekognition**
-**Amazon Textract**
+- **Amazon Rekognition**
+- **Amazon Textract**
 
 ### 자연어 처리 서비스 
 - **Amazon Comprehend** : 사람의 감정 센싱
