@@ -22,7 +22,7 @@
 - **Amazon Lookout for Metrics** : 이상 지표 감지
 
 ### 기계학습 플랫폼 서비스
-**Amazon Bedrock**
+- **Amazon Bedrock**
 
 ### 서비스 특징 및 운영 방식
 - SDK와 개발 도구를통해 개발 생상선 높임 
