@@ -96,7 +96,8 @@
 
 6. 파일 업로드 후 객체 URL 확인
 
-<img width="1590" height="502" alt="image" src="https://github.com/user-attachments/assets/55585b3c-afae-4bb9-9b91-79dc9b48d4b3" />
+<img width="486" height="93" alt="image" src="https://github.com/user-attachments/assets/13412a05-079e-42aa-9c88-6ed054b3fc6b" />
+
 
 ### ※ AccessDenied 오류 발생 시 
 
