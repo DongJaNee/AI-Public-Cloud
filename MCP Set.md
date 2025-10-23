@@ -55,8 +55,9 @@ pnpm install
 
 ---
 
+<img width="1052" height="853" alt="image" src="https://github.com/user-attachments/assets/00a7adf7-15ca-4421-90d9-6ccc6e1f32cd" />
 
-<img width="721" height="444" alt="image" src="https://github.com/user-attachments/assets/f59f7439-cd9d-4815-8ca0-eea971e816ac" />
+
 
 ---
 ### Filesystem MCP
@@ -86,7 +87,7 @@ pnpm install
       "command": "npx",
       "args": ["-y", "@suekou/mcp-notion-server"],
       "env": {
-        "NOTION_API_TOKEN": "ntn_Y38328568259Blu8NvS1dLCcQX4CVZNSBzzYqEXPILD8QI",
+        "NOTION_API_TOKEN": "YOUR NOTION_API_TOKEN",
         "APPDATA": "C:\\Users\\Admin\\AppData\\Roaming"
       }
     },
