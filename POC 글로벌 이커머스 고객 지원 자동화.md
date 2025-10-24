@@ -351,6 +351,92 @@ EOF
 echo "✅ 상태 머신 정의 파일 생성 완료"
 ```
 
+#### 6-2 상태 머신 생성
+```
+# Step Functions 상태 머신 생성
+STATE_MACHINE_ARN=$(aws stepfunctions create-state-machine \
+  --name ReviewAnalysisWorkflow-$MY_NAME \
+  --definition file://state-machine-definition.json \
+  --role-arn $ROLE_ARN \
+  --query 'stateMachineArn' \
+  --output text)
+
+echo "✅ Step Functions 상태 머신 생성 완료"
+echo "State Machine ARN: $STATE_MACHINE_ARN"
+```
+
+### 7. EventBridge 규칙 생성
+- S3 리뷰가 업로드되면 자동으로 Step Function 실행하도록 설정
+
+#### 7-1 S3 버킷에 EventBridge 알림 활성화 
+```
+# S3 버킷에 EventBridge 알림 활성화
+aws s3api put-bucket-notification-configuration \
+  --bucket $BUCKET_NAME \
+  --notification-configuration '{
+    "EventBridgeConfiguration": {}
+  }'
+
+echo "✅ S3 EventBridge 알림 활성화 완료"
+```
+
+#### 7-2 EventBridge 규칙에 대한 IAM 역할 생성
+```
+ EventBridge 신뢰 정책 생성
+cat > eventbridge-trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+# EventBridge 역할 생성
+aws iam create-role \
+  --role-name EventBridgeToSQSRole \
+  --assume-role-policy-document file://eventbridge-trust-policy.json
+
+# SQS 전송 권한 정책 생성
+cat > eventbridge-sqs-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage"
+      ],
+      "Resource": "$QUEUE_ARN"
+    }
+  ]
+}
+EOF
+
+# 정책 연결
+aws iam put-role-policy \
+  --role-name EventBridgeToSQSRole \
+  --policy-name SendToSQS \
+  --policy-document file://eventbridge-sqs-policy.json
+
+# 역할 ARN 가져오기
+EVENTBRIDGE_ROLE_ARN=$(aws iam get-role \
+  --role-name EventBridgeToSQSRole \
+  --query 'Role.Arn' \
+  --output text)
+
+echo "✅ EventBridge IAM 역할 생성 완료"
+sleep 10
+```
+
+
+
 
 
 
