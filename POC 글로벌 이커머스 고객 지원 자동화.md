@@ -601,6 +601,118 @@ aws stepfunctions describe-execution \
   --output text
 ```
 
+### 10. S3 업로드를 통한 자동 실행 테스트
+- S3에 리뷰를 업로드하면 자동으로 분석 시작
+
+#### 10-1 S3에 리뷰 업로드
+```
+# S3에 리뷰 파일들 업로드
+aws s3 cp review-positive-ko.json s3://$BUCKET_NAME/reviews/
+aws s3 cp review-negative-ko.json s3://$BUCKET_NAME/reviews/
+aws s3 cp review-positive-en.json s3://$BUCKET_NAME/reviews/
+aws s3 cp review-negative-ja.json s3://$BUCKET_NAME/reviews/
+aws s3 cp review-positive-zh.json s3://$BUCKET_NAME/reviews/
+
+echo "✅ 모든 리뷰를 S3에 업로드 완료"
+echo "⏳ EventBridge → SQS → Step Functions 자동 실행 대기 중..."
+```
+
+#### 10-2 SQS 메시지 확인
+```
+# SQS 큐에 메시지가 들어왔는지 확인
+sleep 5
+
+aws sqs get-queue-attributes \
+  --queue-url $QUEUE_URL \
+  --attribute-names ApproximateNumberOfMessages
+
+echo "위 숫자가 0보다 크면 메시지가 큐에 들어온 것입니다."
+```
+
+#### 10-3 SQS 메시지 수동 처리 스크립트 생성
+- EventBridge가 SQS로 메시지를 보내면, 이를 읽어서 Step Function을 생성 하는 스크립트 만든다.
+
+```
+cat > process-queue.sh << 'EOF'
+#!/bin/bash
+
+# 환경 변수 확인
+if [ -z "$QUEUE_URL" ] || [ -z "$STATE_MACHINE_ARN" ]; then
+  echo "❌ 환경 변수가 설정되지 않았습니다."
+  echo "다음 명령어를 먼저 실행하세요:"
+  echo "export QUEUE_URL=<your-queue-url>"
+  echo "export STATE_MACHINE_ARN=<your-state-machine-arn>"
+  exit 1
+fi
+
+echo "🔄 SQS 메시지 처리 시작..."
+
+# 메시지 수신
+MESSAGES=$(aws sqs receive-message \
+  --queue-url $QUEUE_URL \
+  --max-number-of-messages 10 \
+  --wait-time-seconds 5)
+
+# 메시지가 있는지 확인
+if [ -z "$(echo $MESSAGES | jq -r '.Messages')" ] || [ "$(echo $MESSAGES | jq -r '.Messages')" = "null" ]; then
+  echo "📭 처리할 메시지가 없습니다."
+  exit 0
+fi
+
+# 각 메시지 처리
+echo $MESSAGES | jq -c '.Messages[]' | while read -r message; do
+  RECEIPT_HANDLE=$(echo $message | jq -r '.ReceiptHandle')
+  BODY=$(echo $message | jq -r '.Body')
+  
+  # S3 이벤트에서 파일 정보 추출
+  BUCKET=$(echo $BODY | jq -r '.detail.bucket.name')
+  KEY=$(echo $BODY | jq -r '.detail.object.key')
+  
+  echo "📄 처리 중: s3://$BUCKET/$KEY"
+  
+  # S3에서 리뷰 파일 다운로드
+  aws s3 cp s3://$BUCKET/$KEY /tmp/review.json
+  
+  # Step Functions 실행
+  EXECUTION_NAME="execution-$(basename $KEY .json)-$(date +%s)"
+  
+  aws stepfunctions start-execution \
+    --state-machine-arn $STATE_MACHINE_ARN \
+    --name $EXECUTION_NAME \
+    --input file:///tmp/review.json
+  
+  echo "✅ Step Functions 실행: $EXECUTION_NAME"
+  
+  # 메시지 삭제
+  aws sqs delete-message \
+    --queue-url $QUEUE_URL \
+    --receipt-handle $RECEIPT_HANDLE
+  
+  echo "🗑️  메시지 삭제 완료"
+  echo "---"
+done
+
+echo "✅ 모든 메시지 처리 완료"
+EOF
+
+chmod +x process-queue.sh
+
+echo "✅ SQS 메시지 처리 스크립트 생성 완료"
+```
+
+#### 10-4 스크립트 실행
+```
+# 환경 변수 설정 (위에서 생성한 값 사용)
+export QUEUE_URL=$QUEUE_URL
+export STATE_MACHINE_ARN=$STATE_MACHINE_ARN
+
+# 스크립트 실행
+./process-queue.sh
+
+echo "⏳ Step Functions 실행 완료까지 약 20초 대기 중..."
+sleep 20
+```
+
 
 
 
