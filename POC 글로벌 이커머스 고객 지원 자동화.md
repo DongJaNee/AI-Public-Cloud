@@ -854,6 +854,8 @@ echo "✅ 통계 조회 스크립트 생성 완료"
 ./show-statistics.sh
 ```
 
+<img width="332" height="403" alt="image" src="https://github.com/user-attachments/assets/a1ca5a86-381f-4434-8150-583c8ddbce92" />
+
 
 
 
