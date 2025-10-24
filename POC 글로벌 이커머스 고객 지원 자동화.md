@@ -435,6 +435,100 @@ echo "✅ EventBridge IAM 역할 생성 완료"
 sleep 10
 ```
 
+#### 7-3 EventBridge 규칙 생성
+```
+# EventBridge 규칙 생성 (S3 객체 생성 이벤트)
+aws events put-rule \
+  --name S3ReviewUploadRule-$MY_NAME \
+  --event-pattern "{
+    \"source\": [\"aws.s3\"],
+    \"detail-type\": [\"Object Created\"],
+    \"detail\": {
+      \"bucket\": {
+        \"name\": [\"$BUCKET_NAME\"]
+      },
+      \"object\": {
+        \"key\": [{\"prefix\": \"reviews/\"}]
+      }
+    }
+  }"
+
+echo "✅ EventBridge 규칙 생성 완료"
+```
+
+#### 7-4 SQS를 타겟으로 추가 
+```
+# SQS를 EventBridge 타겟으로 추가
+aws events put-targets \
+  --rule S3ReviewUploadRule \
+  --targets "Id"="1","Arn"="$QUEUE_ARN","RoleArn"="$EVENTBRIDGE_ROLE_ARN"
+
+echo "✅ EventBridge 타겟 설정 완료"
+```
+
+### 8. 테스트 데이터 wnsql
+- 다양한 언어의 고객 리뷰 샘플을 생성
+
+#### 8-1 긍정 리뷰(한국어)
+```
+cat > review-positive-ko.json << 'EOF'
+{
+  "reviewId": "review-001",
+  "reviewText": "이 제품 정말 만족해요! 배송도 빠르고 품질도 훌륭합니다. 강력 추천합니다!"
+}
+EOF
+
+echo "✅ 긍정 리뷰 (한국어) 생성 완료"
+```
+
+#### 8-2 부정 리뷰(한국어)
+```
+cat > review-negative-ko.json << 'EOF'
+{
+  "reviewId": "review-002",
+  "reviewText": "배송이 너무 늦어서 실망했어요. 제품 포장도 허술하고 품질이 기대 이하입니다."
+}
+EOF
+
+echo "✅ 부정 리뷰 (한국어) 생성 완료"
+```
+
+#### 8-3 긍정 리뷰(영어)
+```
+cat > review-positive-en.json << 'EOF'
+{
+  "reviewId": "review-003",
+  "reviewText": "This product is amazing! Fast delivery and great quality. Highly recommended!"
+}
+EOF
+
+echo "✅ 긍정 리뷰 (영어) 생성 완료"
+```
+
+#### 8-4 부정 리뷰(일본어)
+```
+cat > review-negative-ja.json << 'EOF'
+{
+  "reviewId": "review-004",
+  "reviewText": "配送が遅すぎます。商品の品質も期待外れでした。残念です。"
+}
+EOF
+
+echo "✅ 부정 리뷰 (일본어) 생성 완료"
+```
+
+#### 8-5 긍정 리뷰(중국어)
+```
+cat > review-positive-zh.json << 'EOF'
+{
+  "reviewId": "review-005",
+  "reviewText": "产品质量非常好！物流很快，包装也很精美。五星好评！"
+}
+EOF
+
+echo "✅ 긍정 리뷰 (중국어) 생성 완료"
+```
+
 
 
 
