@@ -230,8 +230,126 @@ echo "⏳ IAM 역할 전파 대기 중... (10초)"
 sleep 10
 ```
 
+### 6. Step Function 상태 머신 생성
+```
+cat > state-machine-definition.json << EOF
+{
+  "Comment": "고객 리뷰 분석 워크플로우",
+  "StartAt": "DetectLanguage",
+  "States": {
+    "DetectLanguage": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:comprehend:detectDominantLanguage",
+      "Parameters": {
+        "Text.$": "$.reviewText"
+      },
+      "ResultPath": "$.languageResult",
+      "Next": "CheckLanguage"
+    },
+    "CheckLanguage": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.languageResult.Languages[0].LanguageCode",
+          "StringEquals": "ko",
+          "Next": "AnalyzeSentiment"
+        }
+      ],
+      "Default": "TranslateToKorean"
+    },
+    "TranslateToKorean": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:translate:translateText",
+      "Parameters": {
+        "Text.$": "$.reviewText",
+        "SourceLanguageCode.$": "$.languageResult.Languages[0].LanguageCode",
+        "TargetLanguageCode": "ko"
+      },
+      "ResultPath": "$.translationResult",
+      "Next": "AnalyzeSentiment"
+    },
+    "AnalyzeSentiment": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:comprehend:detectSentiment",
+      "Parameters": {
+        "Text.$": "States.Format('{}', $.reviewText)",
+        "LanguageCode.$": "$.languageResult.Languages[0].LanguageCode"
+      },
+      "ResultPath": "$.sentimentResult",
+      "Next": "DetectKeyPhrases"
+    },
+    "DetectKeyPhrases": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:comprehend:detectKeyPhrases",
+      "Parameters": {
+        "Text.$": "States.Format('{}', $.reviewText)",
+        "LanguageCode.$": "$.languageResult.Languages[0].LanguageCode"
+      },
+      "ResultPath": "$.keyPhrasesResult",
+      "Next": "SaveToDynamoDB"
+    },
+    "SaveToDynamoDB": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "ReviewAnalysis-"$My_name"",
+        "Item": {
+          "ReviewId": {
+            "S.$": "$.reviewId"
+          },
+          "Timestamp": {
+            "S.$": "$.State.EnteredTime"
+          },
+          "OriginalText": {
+            "S.$": "$.reviewText"
+          },
+          "DetectedLanguage": {
+            "S.$": "$.languageResult.Languages[0].LanguageCode"
+          },
+          "Sentiment": {
+            "S.$": "$.sentimentResult.Sentiment"
+          },
+          "PositiveScore": {
+            "N.$": "States.Format('{}', $.sentimentResult.SentimentScore.Positive)"
+          },
+          "NegativeScore": {
+            "N.$": "States.Format('{}', $.sentimentResult.SentimentScore.Negative)"
+          }
+        }
+      },
+      "ResultPath": "$.dynamoResult",
+      "Next": "CheckIfNegative"
+    },
+    "CheckIfNegative": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.sentimentResult.Sentiment",
+          "StringEquals": "NEGATIVE",
+          "Next": "SendSNSAlert"
+        }
+      ],
+      "Default": "Success"
+    },
+    "SendSNSAlert": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "$TOPIC_ARN",
+        "Subject": "⚠️ 부정 리뷰 감지 알림",
+        "Message.$": "States.Format('부정 리뷰가 감지되었습니다.\n\n리뷰 ID: {}\n내용: {}\n부정 점수: {}\n언어: {}', $.reviewId, $.reviewText, $.sentimentResult.SentimentScore.Negative, $.languageResult.Languages[0].LanguageCode)"
+      },
+      "Next": "Success"
+    },
+    "Success": {
+      "Type": "Succeed"
+    }
+  }
+}
+EOF
 
-
+echo "✅ 상태 머신 정의 파일 생성 완료"
+```
 
 
 
