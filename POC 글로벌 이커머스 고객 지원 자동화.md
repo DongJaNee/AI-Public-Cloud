@@ -713,6 +713,147 @@ echo "⏳ Step Functions 실행 완료까지 약 20초 대기 중..."
 sleep 20
 ```
 
+### 11. 결과 확인
+#### 11-1 DynamoDB 데이터 조회
+```
+# DynamoDB 테이블의 모든 데이터 조회
+echo "=== DynamoDB 저장된 리뷰 분석 결과 ==="
+aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME --output table
+
+# 간단한 형식으로 조회
+aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --query 'Items[*].[ReviewId.S, Sentiment.S, PositiveScore.N, NegativeScore.N, DetectedLanguage.S]' \
+  --output table
+```
+
+#### 11-2 부정 리뷰만 필터링
+```
+# 부정 리뷰만 조회
+echo "=== 부정 리뷰 목록 ==="
+aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --filter-expression "Sentiment = :sentiment" \
+  --expression-attribute-values '{":sentiment":{"S":"NEGATIVE"}}' \
+  --query 'Items[*].[ReviewId.S, OriginalText.S, NegativeScore.N]' \
+  --output table
+```
+
+#### 11-3 Step Functions 실행 이력 확인
+```
+# 최근 실행 이력 조회
+echo "=== Step Functions 실행 이력 ==="
+aws stepfunctions list-executions \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --max-results 10 \
+  --query 'executions[*].[name, status, startDate]' \
+  --output table
+```
+
+#### 11-4 특정 실행의 상세 결과 확인
+```
+# 가장 최근 실행의 상세 정보 확인
+LATEST_EXECUTION=$(aws stepfunctions list-executions \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --max-results 1 \
+  --query 'executions[0].executionArn' \
+  --output text)
+
+echo "=== 최근 실행 상세 정보 ==="
+aws stepfunctions describe-execution \
+  --execution-arn $LATEST_EXECUTION
+
+# 실행 히스토리 확인 (각 단계별 실행 과정)
+echo "=== 실행 히스토리 ==="
+aws stepfunctions get-execution-history \
+  --execution-arn $LATEST_EXECUTION \
+  --query 'events[*].[timestamp, type]' \
+  --output table
+```
+
+### 12. 통계 조회 스크립트
+```
+at > show-statistics.sh << 'EOF'
+#!/bin/bash
+
+echo "======================================"
+echo "    리뷰 분석 통계 대시보드"
+echo "======================================"
+echo ""
+
+# 전체 리뷰 수
+TOTAL_COUNT=$(aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME --select COUNT --query 'Count' --output text)
+echo "📊 전체 분석된 리뷰 수: $TOTAL_COUNT"
+echo ""
+
+# 감정별 통계
+echo "😊 감정 분석 결과:"
+POSITIVE_COUNT=$(aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --filter-expression "Sentiment = :sentiment" \
+  --expression-attribute-values '{":sentiment":{"S":"POSITIVE"}}' \
+  --select COUNT --query 'Count' --output text)
+echo "  - 긍정 리뷰: $POSITIVE_COUNT개"
+
+NEGATIVE_COUNT=$(aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --filter-expression "Sentiment = :sentiment" \
+  --expression-attribute-values '{":sentiment":{"S":"NEGATIVE"}}' \
+  --select COUNT --query 'Count' --output text)
+echo "  - 부정 리뷰: $NEGATIVE_COUNT개"
+
+NEUTRAL_COUNT=$(aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --filter-expression "Sentiment = :sentiment" \
+  --expression-attribute-values '{":sentiment":{"S":"NEUTRAL"}}' \
+  --select COUNT --query 'Count' --output text)
+echo "  - 중립 리뷰: $NEUTRAL_COUNT개"
+
+MIXED_COUNT=$(aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --filter-expression "Sentiment = :sentiment" \
+  --expression-attribute-values '{":sentiment":{"S":"MIXED"}}' \
+  --select COUNT --query 'Count' --output text)
+echo "  - 혼합 리뷰: $MIXED_COUNT개"
+echo ""
+
+# 언어별 통계
+echo "🌍 언어별 분포:"
+aws dynamodb scan --table-name ReviewAnalysis-$MY_NAME \
+  --projection-expression "DetectedLanguage" | \
+  jq -r '.Items[].DetectedLanguage.S' | \
+  sort | uniq -c | \
+  awk '{
+    lang=$2
+    count=$1
+    if (lang=="ko") lang="한국어"
+    else if (lang=="en") lang="영어"
+    else if (lang=="ja") lang="일본어"
+    else if (lang=="zh") lang="중국어"
+    printf "  - %s: %d개\n", lang, count
+  }'
+echo ""
+
+# Step Functions 실행 통계
+echo "⚙️  Step Functions 실행 상태:"
+aws stepfunctions list-executions \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --max-results 50 | \
+  jq -r '.executions[].status' | \
+  sort | uniq -c | \
+  awk '{printf "  - %s: %d개\n", $2, $1}'
+echo ""
+
+echo "======================================"
+echo "✅ 통계 조회 완료"
+echo "======================================"
+EOF
+
+chmod +x show-statistics.sh
+
+echo "✅ 통계 조회 스크립트 생성 완료"
+```
+
+#### 12-2 통계 실행
+```
+# 통계 스크립트 실행
+./show-statistics.sh
+```
+
 
 
 
