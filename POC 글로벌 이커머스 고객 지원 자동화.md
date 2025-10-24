@@ -529,6 +529,78 @@ EOF
 echo "✅ 긍정 리뷰 (중국어) 생성 완료"
 ```
 
+### 9. 수동 테스트(Step Function 직접 실행)
+- S3 업로드 전에 먼저 Step Function을 수동으로 실행
+
+#### 9-1 긍정 리뷰 테스트
+```
+# 긍정 리뷰로 Step Functions 실행
+EXECUTION_ARN_1=$(aws stepfunctions start-execution \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --name execution-positive-ko-$(date +%s) \
+  --input file://review-positive-ko.json \
+  --query 'executionArn' \
+  --output text)
+
+echo "✅ 긍정 리뷰 실행 시작"
+echo "Execution ARN: $EXECUTION_ARN_1"
+
+# 실행 상태 확인 (약 10초 후)
+echo "⏳ 10초 대기 중..."
+sleep 10
+
+aws stepfunctions describe-execution \
+  --execution-arn $EXECUTION_ARN_1 \
+  --query 'status' \
+  --output text
+```
+
+#### 9-2 부정 리뷰 테스트(SNS 발송)
+```
+# 부정 리뷰로 Step Functions 실행
+EXECUTION_ARN_2=$(aws stepfunctions start-execution \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --name execution-negative-ko-$(date +%s) \
+  --input file://review-negative-ko.json \
+  --query 'executionArn' \
+  --output text)
+
+echo "✅ 부정 리뷰 실행 시작 (SNS 알림이 발송됩니다)"
+echo "Execution ARN: $EXECUTION_ARN_2"
+
+# 실행 상태 확인
+echo "⏳ 10초 대기 중..."
+sleep 10
+
+aws stepfunctions describe-execution \
+  --execution-arn $EXECUTION_ARN_2 \
+  --query 'status' \
+  --output text
+
+echo "⚠️  이메일로 부정 리뷰 알림이 발송되었는지 확인하세요!"
+```
+
+#### 9-3 영어 리뷰 테스트
+```
+# 영어 리뷰로 Step Functions 실행
+EXECUTION_ARN_3=$(aws stepfunctions start-execution \
+  --state-machine-arn $STATE_MACHINE_ARN \
+  --name execution-positive-en-$(date +%s) \
+  --input file://review-positive-en.json \
+  --query 'executionArn' \
+  --output text)
+
+echo "✅ 영어 리뷰 실행 시작"
+echo "Execution ARN: $EXECUTION_ARN_3"
+
+sleep 10
+
+aws stepfunctions describe-execution \
+  --execution-arn $EXECUTION_ARN_3 \
+  --query 'status' \
+  --output text
+```
+
 
 
 
